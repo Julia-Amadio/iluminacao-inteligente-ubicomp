@@ -1,7 +1,7 @@
 # backend/database.py
 # Importa de config.py. Exporta a instância db que os demais usam.
 # Faz conexão com mongo, inicializa banco e as duas coleções
-from pymongo import MongoClient, ASCENDING
+from pymongo import MongoClient
 from config import MONGO_URI
 
 # Singleton. Criado uma vez aqui, importado pelos demais módulos
