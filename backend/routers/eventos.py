@@ -1,7 +1,7 @@
 # backend/routers/eventos.py
 from fastapi import APIRouter
 from pymongo import ASCENDING
-from datetime import datetime
+from datetime import datetime, timezone
 from database import db
 
 router = APIRouter(prefix="/eventos", tags=["eventos"])
@@ -25,7 +25,7 @@ def get_eventos_hoje():
     """
     Retorna todos os eventos do dia atual.
     """
-    inicio = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    inicio = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     eventos = list(
         db.eventos
         .find({"timestamp": {"$gte": inicio}}, {"_id": 0})
