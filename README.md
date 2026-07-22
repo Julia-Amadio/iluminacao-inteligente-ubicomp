@@ -16,7 +16,28 @@ uvicorn main:app --reload
 ```
 A documentação automática da API fica disponível em `http://localhost:8000/docs` assim que o servidor sobe.
 
-A `.env` (não versionada) guarda a connection string do MongoDB e, opcionalmente, as configs do broker MQTT — variáveis detalhadas em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#27-configuração-env). MongoDB Atlas tem tier gratuito que serve bem; uma observação: no Atlas precisamos liberar o IP de acesso, em desenvolvimento colocar `0.0.0.0/0` para não travar durante os testes.
+## Rodar (frontend)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+O painel fica disponível em `http://localhost:5173`. As URLs da API e do broker MQTT WebSocket e o tópico de controle devem ser inseridos em `frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:8000
+VITE_MQTT_URL=
+VITE_MQTT_CONTROL_TOPIC=
+```
+
+As variáveis são opcionais durante o desenvolvimento, pois esses mesmos valores já são usados
+como padrão pelo frontend. O painel consulta eventos e métricas da API ao abrir e atualiza os dados
+a cada 30 segundos. A conexão MQTT usa WebSockets, requisito para acesso ao broker diretamente do
+navegador.
+
+A `backend/.env` (não versionada) guarda a connection string do MongoDB e, opcionalmente, as configs do broker MQTT — variáveis detalhadas em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#27-configuração-env). No Atlas o IP de acesso está como `0.0.0.0/0` para não travar durante os testes.
 
 ## Documentação
 
@@ -47,7 +68,9 @@ endpoints `/eventos` e `/metricas`. Falta:
 
 ### Protótipo 4 — Interface e atuação remota bidirecional
 
-Ainda não iniciado. Divisão sugerida:
+O frontend React já está implementado com painel responsivo, histórico de eventos, leituras mais
+recentes dos sensores, gráfico de eficiência energética e controle manual via MQTT. Para a atuação
+remota funcionar de ponta a ponta, ainda faltam as alterações indicadas no backend e no firmware:
 
 **Preparação do backend/dados**
 - [ ] Adicionar campo de origem no schema de eventos (ex. `"origem": "sensor" | "manual"`) — a métrica
@@ -63,9 +86,14 @@ Ainda não iniciado. Divisão sugerida:
 - [ ] Publicar o evento de transição resultante com `origem: "manual"` quando disparado por comando
 
 **Frontend React**
-- [ ] Setup do projeto e cliente MQTT (via WebSockets) para publicar no tópico de controle
+- [x] Setup do projeto com React, TypeScript e Vite
+- [x] Cliente MQTT via WebSockets para publicar no tópico de controle
       diretamente do navegador
-- [ ] Tela de histórico de eventos, consumindo `GET /eventos`
-- [ ] Painel de eficiência energética, consumindo `GET /metricas`
-- [ ] Controle manual do LED (liga/desliga), publicando no tópico de controle
-- [ ] Build e hospedagem (definir onde o frontend vai rodar)
+- [x] Tela de histórico de eventos, consumindo `GET /eventos`
+- [x] Painel de eficiência energética, consumindo `GET /metricas`
+- [x] Controle manual do LED (liga/desliga), publicando comandos com `origem: "manual"` no tópico
+      de controle
+- [x] Atualização automática dos dados, feedback de conexão com a API e estado da conexão MQTT
+- [x] Layout responsivo para desktop e dispositivos móveis
+- [x] Build de produção com Vite (`npm run build`)
+- [ ] Hospedagem (definir onde o frontend vai rodar)
