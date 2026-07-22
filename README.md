@@ -57,12 +57,12 @@ para o raciocínio por trás de cada item.
 Já implementado: subscriber MQTT, fila + worker de inserção, TTL nos eventos, `agregar_dia()`,
 endpoints `/eventos` e `/metricas`. Falta:
 
-- [ ] Validar o payload recebido do ESP32 antes de inserir (hoje `_inserir_evento` confia cegamente
+- [x] Validar o payload recebido do ESP32 antes de inserir (hoje `_inserir_evento` confia cegamente
       em `payload.get(...)`; um payload malformado insere campos `None` silenciosamente)
 - [ ] Agendar `agregar_dia()` automaticamente (APScheduler ou cron), substituindo o
       `POST /metricas/agregar` manual usado nos testes
 - [ ] Criar `.env.example` com as variáveis documentadas em `docs/ARCHITECTURE.md`
-- [ ] Fixar versões em `requirements.txt` (`paho-mqtt==2.1.0`, etc.)
+- [x] Fixar versões em `requirements.txt` (`paho-mqtt==2.1.0`, etc.)
 - [ ] Testes automatizados mínimos (endpoints e `agregar_dia()`, incluindo os casos de borda de
       início/fim de dia)
 
