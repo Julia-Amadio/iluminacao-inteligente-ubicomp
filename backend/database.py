@@ -5,7 +5,7 @@ from pymongo import MongoClient
 from config import MONGO_URI
 
 # Singleton. Criado uma vez aqui, importado pelos demais módulos
-cliente_mongo = MongoClient(MONGO_URI)
+cliente_mongo = MongoClient(MONGO_URI, tz_aware=True)
 db            = cliente_mongo["pervasiva_grupo1"]
 
 def inicializar_banco():
