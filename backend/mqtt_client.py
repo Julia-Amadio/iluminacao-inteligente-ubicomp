@@ -46,13 +46,13 @@ def worker_insercao():
         finally:
             fila_eventos.task_done()
 
-def _on_connect(client, userdata, flags, rc):
-    if rc == 0:
+def _on_connect(client, userdata, flags, reason_code, properties):
+    if reason_code == 0:
         print("Subscriber MQTT conectado ao broker")
         client.subscribe(MQTT_TOPICO)
         print("Assinando tópico:", MQTT_TOPICO)
     else:
-        print("Falha na conexão MQTT, código:", rc)
+        print("Falha na conexão MQTT, código:", reason_code)
 
 def _on_message(client, userdata, msg):
     """
@@ -74,7 +74,10 @@ def iniciar_subscriber():
     O cliente paho é local a essa função, não precisa ser singleton
     porque só existe uma instância dele e só essa thread o acessa.
     """
-    cliente = mqtt.Client(client_id=MQTT_CLIENT_ID)
+    cliente = mqtt.Client(
+        callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
+        client_id=MQTT_CLIENT_ID,
+    )
 
     # autenticação, só configura se as credenciais estiverem na .env
     if MQTT_USER and MQTT_PASSWORD:
