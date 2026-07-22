@@ -6,6 +6,7 @@ import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from database import inicializar_banco
 from mqtt_client import iniciar_subscriber, worker_insercao
 from routers import eventos, metricas
@@ -29,6 +30,19 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Iluminação Inteligente — Grupo 1",
     lifespan=lifespan
+)
+
+# O frontend roda em outra origem durante o desenvolvimento (Vite, porta 5173).
+# A API e publica e nao usa cookies, portanto liberar as origens configuradas e seguro.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
 )
 
 app.include_router(eventos.router)
