@@ -1,0 +1,6 @@
+# Dependências só de desenvolvimento/teste. A imagem Docker instala apenas
+# requirements.txt, então nada daqui vai para produção.
+-r requirements.txt
+
+pytest==8.4.2
+mongomock==4.3.0
