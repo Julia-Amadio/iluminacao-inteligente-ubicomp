@@ -1,6 +1,8 @@
 # iluminacao-inteligente-ubicomp
 Desenvolvimento de um sistema embarcado distribuído de iluminação inteligente usando ESP32. Projeto final para a disciplina de Computação Pervasiva e Ubíqua (1º Semestre de 2026).
 
+---
+
 ## Rodar (API)
 ```
 cd backend
@@ -15,6 +17,34 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 A documentação automática da API fica disponível em `http://localhost:8000/docs` assim que o servidor sobe.
+
+## Testes
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+pytest
+```
+
+Não precisam de MongoDB nem de broker: o banco é substituído por `mongomock` e o cliente MQTT é
+stubado. A suíte é curta de propósito — cobre as regras que errariam **em silêncio**, produzindo um
+número plausível em vez de um erro: atribuição de economia por origem do evento, fronteira de dia no
+fuso local, exclusão do dia corrente na agregação, compatibilidade com eventos gravados antes do campo
+`origem`, e a consistência entre a janela de override do backend e a do firmware.
+
+## Rodar (Docker)
+
+O `Dockerfile` fica na raiz do repositório (não em `backend/`), então os comandos abaixo rodam
+a partir daqui. Precisa de um `.env` na raiz com pelo menos `MONGO_URI` (ver `.env.example`).
+
+```
+docker build -t iluminacao-inteligente .
+docker run --rm -p 8000:8000 --env-file .env iluminacao-inteligente
+```
+
+A API sobe em `http://localhost:8000`, com o mesmo Swagger em `/docs`. Não use aspas nos valores
+do `.env` — o `python-dotenv` (execução local) as remove sozinho, mas `docker run --env-file` não,
+e a URI do Mongo quebra com aspas literais.
 
 ## Rodar (frontend)
 
@@ -37,13 +67,20 @@ como padrão pelo frontend. O painel consulta eventos e métricas da API ao abri
 a cada 30 segundos. A conexão MQTT usa WebSockets, requisito para acesso ao broker diretamente do
 navegador.
 
-A `backend/.env` (não versionada) guarda a connection string do MongoDB e, opcionalmente, as configs do broker MQTT — variáveis detalhadas em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#27-configuração-env). No Atlas o IP de acesso está como `0.0.0.0/0` para não travar durante os testes.
+O `.env` (não versionado, na raiz do repositório — mesmo lugar do `.env.example` e do `Dockerfile`) guarda a connection string do MongoDB e, opcionalmente, as configs do broker MQTT — variáveis detalhadas em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#27-configuração-env). No Atlas o IP de acesso está como `0.0.0.0/0` para não travar durante os testes.
+
+---
 
 ## Documentação
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — arquitetura do sistema completo (os quatro protótipos) e detalhamento da API (estrutura de pastas, modelo de concorrência, fluxo de dados, modelo de dados no MongoDB, endpoints).
+- [`docs/VALIDACAO.md`](docs/VALIDACAO.md) — registro do que foi efetivamente validado no hardware, com as evidências observadas, e do que está implementado mas ainda não exercitado. Inclui os pontos de projeto que rendem discussão na apresentação.
+- [`docs/SETUP_EMBARCADOS.md`](docs/SETUP_EMBARCADOS.md) — roteiro de bring-up do ambiente embarcado (driver CH9102, Thonny, firmware MicroPython) numa máquina do zero.
+- [`docs/codigo_esp32.py`](docs/codigo_esp32.py) — firmware MicroPython do ESP32 (sensoriamento, fusão de contexto, publicação MQTT e override manual).
 - [`docs/1_PLANEJAMENTO.pdf`](docs/1_PLANEJAMENTO.pdf) — planejamento e proposta original do projeto.
 - [`docs/2_RELATÓRIO_PROTO2.pdf`](docs/2_RELATÓRIO_PROTO2.pdf) — relatório de execução dos Protótipos 1 e 2 (montagem física e testes com o broker MQTT).
+
+---
 
 ## Roadmap
 
@@ -59,12 +96,13 @@ endpoints `/eventos` e `/metricas`. Falta:
 
 - [x] Validar o payload recebido do ESP32 antes de inserir (hoje `_inserir_evento` confia cegamente
       em `payload.get(...)`; um payload malformado insere campos `None` silenciosamente)
-- [ ] Agendar `agregar_dia()` automaticamente (APScheduler ou cron), substituindo o
-      `POST /metricas/agregar` manual usado nos testes
-- [ ] Criar `.env.example` com as variáveis documentadas em `docs/ARCHITECTURE.md`
+- [x] Agendar `agregar_dia()` automaticamente (APScheduler ou cron), substituindo o
+      `POST /metricas/agregar` manual usado nos testes — feito via `agregar_pendentes()`, que roda no
+      startup e num job diário, e recupera dias sem métrica em vez de só agregar "ontem"
+- [x] Criar `.env.example` com as variáveis documentadas em `docs/ARCHITECTURE.md`
 - [x] Fixar versões em `requirements.txt` (`paho-mqtt==2.1.0`, etc.)
-- [ ] Testes automatizados mínimos (endpoints e `agregar_dia()`, incluindo os casos de borda de
-      início/fim de dia)
+- [x] Testes automatizados mínimos (endpoints e `agregar_dia()`, incluindo os casos de borda de
+      início/fim de dia) — em `backend/tests/`, sem dependência de Mongo ou broker
 
 ### Protótipo 4 — Interface e atuação remota bidirecional
 
@@ -73,17 +111,26 @@ recentes dos sensores, gráfico de eficiência energética e controle manual via
 remota funcionar de ponta a ponta, ainda faltam as alterações indicadas no backend e no firmware:
 
 **Preparação do backend/dados**
-- [ ] Adicionar campo de origem no schema de eventos (ex. `"origem": "sensor" | "manual"`) — a métrica
+- [x] Adicionar campo de origem no schema de eventos (ex. `"origem": "sensor" | "manual"`) — a métrica
       de eficiência energética precisa parar de contar como "economia autônoma" o tempo em que o LED
       ficou apagado por comando manual
-- [ ] Atualizar `agregar_dia()` para considerar apenas `origem: "sensor"` no cálculo de
+- [x] Atualizar `agregar_dia()` para considerar apenas `origem: "sensor"` no cálculo de
       `tempo_apagado_s`
+- [x] Expor `GET /estado` com o modo de operação (`automatico` | `manual`) — o frontend não consegue
+      derivar isso de `/eventos` sozinho, porque o timer do override roda no ESP32 e pode expirar sem
+      gerar evento novo
+- [x] Expor `POST /comando` publicando no tópico de controle, para que a atuação remota também passe
+      pelo gateway e fique testável pelo Swagger em `/docs`, sem depender do frontend
 
-**Firmware ESP32**
-- [ ] Assinar um tópico de controle além de publicar no tópico de eventos
-- [ ] Implementar a lógica de override: comando manual recebido sobrepõe a decisão da fusão de
-      contexto (sensores) até novo comando ou critério de expiração
-- [ ] Publicar o evento de transição resultante com `origem: "manual"` quando disparado por comando
+**Firmware ESP32** (código em [`docs/codigo_esp32.py`](docs/codigo_esp32.py) — validado no hardware, ver [`docs/VALIDACAO.md`](docs/VALIDACAO.md))
+- [x] Assinar um tópico de controle além de publicar no tópico de eventos
+- [x] Implementar a lógica de override: comando manual recebido sobrepõe a decisão da fusão de
+      contexto (sensores) por 5 minutos, depois devolve o controle aos sensores
+- [x] Publicar o evento de transição resultante com `origem: "manual"` quando disparado por comando
+- [x] Testar no ESP32 físico: comando remoto acende com ausência de presença e apaga com presença
+      detectada, e o override expira devolvendo o controle aos sensores
+- [ ] Exercitar `reconectar()`: derrubar o Wi-Fi ou o broker durante a operação e confirmar que o
+      ESP32 volta a receber comandos (a reinscrição no tópico nunca foi testada)
 
 **Frontend React**
 - [x] Setup do projeto com React, TypeScript e Vite
@@ -97,3 +144,25 @@ remota funcionar de ponta a ponta, ainda faltam as alterações indicadas no bac
 - [x] Layout responsivo para desktop e dispositivos móveis
 - [x] Build de produção com Vite (`npm run build`)
 - [ ] Hospedagem (definir onde o frontend vai rodar)
+
+**Pendências encontradas em revisão do frontend** (levantadas por leitura estática, ainda não
+discutidas com o grupo — o backend já expõe o que falta para resolver as duas primeiras)
+
+- [ ] **`EnergyChart.tsx:5-6` exibe dados fabricados.** Quando `data` está vazio, o gráfico não mostra
+      estado vazio: renderiza `[42, 55, 48, 68, 61, 75, 72]` com rótulos seg–dom, visualmente idêntico
+      a dado real. O alerta de erro do `App.tsx:50` só aparece quando a API *falha* — se ela responde
+      com `metricas: []`, a curva falsa aparece sem nenhum aviso. **Prioridade alta:** numa
+      apresentação com poucos dias agregados, o gráfico mostra uma curva de eficiência convincente e
+      inventada.
+- [ ] **`App.tsx:56` tem `● Modo automático` fixo no HTML.** Nunca muda, então durante um override
+      manual a interface afirma o oposto do que está acontecendo. Já é resolvível: `GET /estado`
+      devolve `modo` (`automatico` | `manual`) e `override_expira_em`.
+- [ ] **`App.tsx:71` rotula "ECONOMIA MÉDIA" mas exibe `metricas[0].percentual_economia`** — o último
+      dia, não uma média. O array inteiro já vem em `GET /metricas`, então é cálculo local.
+- [ ] **`App.tsx:23` conta "eventos hoje" comparando `toDateString()` em fuso local**, enquanto o
+      backend grava e agrega em UTC — os dois podem discordar sobre qual dia é hoje. `GET /eventos/hoje`
+      existe no backend (em UTC) e não é consumido por ninguém.
+- [ ] Confirmar que o frontend compila (`npm run build` / `tsc`) — não foi verificado na revisão.
+- [ ] Exibir `origem` no histórico de eventos: o campo já vem em `GET /eventos` e `types.ts:8` já o
+      declara, mas nada o mostra — é o que diferencia visualmente uma transição autônoma de um comando
+      manual.
