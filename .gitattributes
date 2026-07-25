@@ -1,0 +1,18 @@
+# Normalização de fins de linha.
+#
+# Este repositório é editado a partir de /mnt/c (WSL) e também por ferramentas
+# Windows nativas — Thonny, editores gráficos. Sem esta configuração, salvar um
+# arquivo por uma dessas ferramentas troca LF por CRLF, e o diff resultante marca
+# TODAS as linhas como alteradas mesmo quando o conteúdo é idêntico: a revisão
+# fica impossível e o `git blame` passa a atribuir o arquivo inteiro a esse commit.
+#
+# `text=auto` deixa o git detectar o que é texto; `eol=lf` fixa LF tanto no
+# repositório quanto no working tree, independente do sistema operacional.
+* text=auto eol=lf
+
+# Binários. O `text=auto` acima já os detectaria sozinho, mas ser explícito
+# elimina qualquer chance de o git tentar converter fim de linha dentro deles.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.ico binary
