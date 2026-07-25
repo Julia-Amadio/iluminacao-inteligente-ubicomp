@@ -1,0 +1,23 @@
+# Nunca deixar segredos entrarem no contexto de build / imagem
+.env
+.env.example
+
+# Ambiente virtual local — recriado dentro da imagem via requirements.txt
+backend/venv/
+**/__pycache__/
+**/*.py[codz]
+
+# Git e CI — irrelevantes pro conteúdo da imagem, e o .git/ sozinho já
+# infla o contexto de build bastante
+.git/
+.gitignore
+.gitlab-ci.yml
+
+# Documentação — não afeta a aplicação (workflow do .gitlab-ci.yml já
+# exclui esses paths do trigger do pipeline pelo mesmo motivo)
+docs/
+README.md
+
+# Editores
+.vscode/
+.idea/
