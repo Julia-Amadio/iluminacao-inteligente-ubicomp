@@ -153,6 +153,57 @@ tempo apenas passou a ser contado no dia em que aconteceu segundo o horário de 
 inseridos moram no dia 24 do calendário UTC e no dia 23 do calendário local, e é essa discordância que
 a mudança resolve.
 
+### 1.9. Atribuição por origem em dia real com override manual — 2026-07-28
+
+Último item pendente do cálculo de eficiência: confirmar, em dado real, que o tempo apagado por
+comando manual não é creditado como economia autônoma. Foram inseridos eventos com
+`origem: "manual"` na base e a coleção `metricas` esvaziada para reconstrução.
+
+Linha do tempo do dia 26/07 (horário local), com o LED apagado por comando em dois momentos:
+
+```
+00:00:00-11:44:59  off/sensor  11.75h  conta
+11:44:59-11:47:23  on /manual   0.04h  —      (LED aceso)
+11:47:23-11:52:23  off/manual   0.08h  IGNORA (apagado por comando)
+11:52:23-12:51:23  on /sensor   0.98h  —      (LED aceso)
+12:51:23-12:56:23  off/manual   0.08h  IGNORA (apagado por comando)
+12:56:23-17:03:21  on /sensor   4.12h  —      (LED aceso)
+17:03:21-00:00:00  off/sensor   6.94h  conta
+```
+
+| cálculo | `tempo_apagado_s` | `percentual_economia` |
+|---|---|---|
+| com atribuição por origem (gravado pela API) | 67298,277 | **77,89 %** |
+| ignorando a origem | 67898,277 | 78,59 % |
+
+A diferença é de **exatamente 600 s** — os dois intervalos de override de 5 minutos, coerente com
+`OVERRIDE_MANUAL_SEGUNDOS = 300`. Cada trecho `off/manual` dura precisamente uma janela de override,
+porque ao fim dela o controle volta para os sensores.
+
+Os sete dias reconstruídos foram conferidos em três vias independentes — o log do container, uma
+execução de `agregar_dia()` fora da API e uma reimplementação separada da varredura da linha do tempo
+— com resultados idênticos até a terceira casa decimal.
+
+**Assimetria esperada, registrada para não parecer defeito:** o dia 25/07 também tem evento manual e a
+diferença entre os dois cálculos é **zero**. O único comando daquele dia foi `on`, e um intervalo de
+LED aceso nunca conta como economia, com ou sem filtro de origem. A origem só altera o resultado em
+intervalos `off` — que é exatamente o que o filtro existe para tratar.
+
+### 1.10. Frontend — pendências da revisão resolvidas — 2026-07-28
+
+As quatro pendências levantadas na revisão de código do painel foram corrigidas. Verificação por
+leitura do código:
+
+| pendência | resolução |
+|---|---|
+| `EnergyChart.tsx` renderizava a série fixa `[42, 55, 48, 68, 61, 75, 72]` quando não havia métricas, indistinguível de dado real | série removida |
+| `● Modo automático` fixo no HTML, mentindo durante override | passou a ler `estado?.modo`, consumindo `GET /estado` |
+| "ECONOMIA MÉDIA" exibia `metricas[0]`, o último dia | virou média real sobre o array, com o número de dias agregados no subtítulo |
+| "eventos hoje" contado em fuso local, divergindo do backend | passou a consumir `GET /eventos/hoje`, cuja fronteira o backend calcula em fuso local |
+
+O painel também passou a consumir `origem` no histórico, distinguindo visualmente transição autônoma
+de comando manual. A execução do painel contra a API e o broker reais foi exercitada pelo grupo.
+
 ## 2. Implementado mas **não** validado
 
 Nada aqui está sabidamente quebrado — só não foi exercitado, e portanto não deve ser afirmado como
@@ -160,11 +211,8 @@ comprovado.
 
 | Item | Situação |
 |---|---|
-| Janela de override de **300 s** (valor de entrega) | Só a janela de teste de 10 s foi exercitada. A lógica é a mesma, mas o valor de produção nunca rodou. Ver o aviso em `backend/config.py`. Há teste garantindo que firmware e backend usam o mesmo valor, qualquer que seja ele. |
 | Comportamento em transição de horário de verão | Coberto por teste (dias de 23 h e 25 h, usando um fuso que ainda tem HV), mas o Brasil não tem HV desde 2019 — nunca ocorreu em operação real. |
-| Atribuição por origem em um dia real | Validada com linhas do tempo sintéticas, incluindo o caso em que filtrar eventos manuais superestimaria a economia. Nenhum dia real com override foi agregado ainda: todos os 26 eventos do dataset têm `origem: "sensor"`. |
 | `reconectar()` no firmware | Escrito para reassinar o tópico de controle após queda de conexão — cenário nunca provocado. Exercitar exigiria derrubar o Wi-Fi ou o broker durante a operação. |
-| Frontend em execução contra API/broker reais | O build e o lint passam, e a integração está implementada (`/eventos`, `/eventos/hoje`, `/metricas`, `/estado`, origem no histórico e comandos MQTT). Ainda falta abrir o painel com o sistema físico completo e registrar evidência visual/funcional. |
 | Job diário disparando às 00:05 locais | O `CronTrigger` foi confirmado calculando o próximo disparo em 00:05 local (= 03:05 UTC), mas nunca foi observado efetivamente disparar. |
 
 ### 2.1. Validação estática do frontend — 2026-07-27
