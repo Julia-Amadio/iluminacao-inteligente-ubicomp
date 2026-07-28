@@ -35,12 +35,12 @@ funcional de forma independente:
 ```mermaid
 flowchart LR
     subgraph Embarcado["Protótipos 1 e 2"]
-        HC["HC-SR04\npresença"] --> ESP["ESP32\nfusão de contexto"]
-        LDR["LDR\nluminosidade"] --> ESP
+        HC["HC-SR04<br/>presença"] --> ESP["ESP32<br/>fusão de contexto"]
+        LDR["LDR<br/>luminosidade"] --> ESP
         ESP --> LED["LED"]
     end
 
-    ESP -- "publish JSON\n(mudança de estado)" --> Broker[("Broker MQTT\nHiveMQ público")]
+    ESP -- "publish JSON<br/>(mudança de estado)" --> Broker[("Broker MQTT<br/>HiveMQ público")]
 
     subgraph Backend["Protótipo 3 — este repositório"]
         Broker -- subscribe --> Sub["paho-mqtt subscriber"]
@@ -52,16 +52,19 @@ flowchart LR
 
     subgraph Frontend["Protótipo 4"]
         UI["React"] -- REST --> API
-        UI -- "publish\n(comando manual)" --> Broker
+        UI -- "publish<br/>(comando manual)" --> Broker
     end
 
-    API -- "publish\n(POST /comando)" --> Broker
-    Broker -- "subscribe\n(tópico de controle)" --> ESP
+    API -- "publish<br/>(POST /comando)" --> Broker
+    Broker -- "subscribe<br/>(tópico de controle)" --> ESP
 ```
 
-A seta de `Broker` para `ESP` no bloco do Frontend só existe a partir do Protótipo 4: é o canal de
-controle remoto, quando o ESP32 passa a assinar também um tópico de comando (além de publicar
-no tópico de eventos).
+As três setas fora dos subgraphs formam o canal de controle remoto, que só existe a partir do
+Protótipo 4 — antes dele o ESP32 apenas publicava, sem assinar nada. Um comando chega ao tópico de
+controle por **dois caminhos equivalentes**: o navegador publicando direto por WebSocket, e
+`POST /comando` publicando pelo backend (ver 2.6 quanto ao motivo de existirem os dois). A seta de
+`Broker` para `ESP` fecha o circuito: é o ESP32 assinando o tópico de comando, além de continuar
+publicando no de eventos.
 
 ### 1.3. Papel de cada componente
 
