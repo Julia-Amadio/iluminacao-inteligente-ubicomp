@@ -1,4 +1,4 @@
-import type { Evento, Metrica } from './types'
+import type { Estado, Evento, Metrica } from './types'
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '')
 
@@ -10,5 +10,7 @@ async function get<T>(path: string): Promise<T> {
 
 export const api = {
   eventos: () => get<Evento[]>('/eventos?limite=50'),
+  eventosHoje: () => get<Evento[]>('/eventos/hoje'),
   metricas: () => get<Metrica[]>('/metricas?limite=30'),
+  estado: () => get<Estado>('/estado'),
 }

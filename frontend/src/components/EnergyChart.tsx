@@ -2,8 +2,10 @@ import type { Metrica } from '../types'
 
 export function EnergyChart({ data }: { data: Metrica[] }) {
   const points = [...data].reverse().slice(-7)
-  const values = points.length ? points.map((item) => Math.max(0, Math.min(100, item.percentual_economia))) : [42, 55, 48, 68, 61, 75, 72]
-  const labels = points.length ? points.map((item) => new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: 'UTC' }).format(new Date(item.data)).replace('.', '')) : ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom']
+  if (!points.length) return <div className="empty-state chart-empty">Ainda não há dias agregados para exibir.</div>
+
+  const values = points.map((item) => Math.max(0, Math.min(100, item.percentual_economia)))
+  const labels = points.map((item) => new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: 'UTC' }).format(new Date(item.data)).replace('.', ''))
   const width = 620, height = 190, left = 18, top = 16, usableW = width - left * 2, usableH = 130
   const coords = values.map((value, i) => ({ x: left + (usableW * i) / Math.max(values.length - 1, 1), y: top + usableH * (1 - value / 100) }))
   const line = coords.map((point, i) => `${i ? 'L' : 'M'}${point.x},${point.y}`).join(' ')

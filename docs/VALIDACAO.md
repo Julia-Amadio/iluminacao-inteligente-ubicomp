@@ -164,8 +164,20 @@ comprovado.
 | Comportamento em transição de horário de verão | Coberto por teste (dias de 23 h e 25 h, usando um fuso que ainda tem HV), mas o Brasil não tem HV desde 2019 — nunca ocorreu em operação real. |
 | Atribuição por origem em um dia real | Validada com linhas do tempo sintéticas, incluindo o caso em que filtrar eventos manuais superestimaria a economia. Nenhum dia real com override foi agregado ainda: todos os 26 eventos do dataset têm `origem: "sensor"`. |
 | `reconectar()` no firmware | Escrito para reassinar o tópico de controle após queda de conexão — cenário nunca provocado. Exercitar exigiria derrubar o Wi-Fi ou o broker durante a operação. |
-| Frontend | Não compilado nem executado na revisão; ver pendências no [README](../README.md#protótipo-4--interface-e-atuação-remota-bidirecional). Não consome `origem` nem `modo`. |
+| Frontend em execução contra API/broker reais | O build e o lint passam, e a integração está implementada (`/eventos`, `/eventos/hoje`, `/metricas`, `/estado`, origem no histórico e comandos MQTT). Ainda falta abrir o painel com o sistema físico completo e registrar evidência visual/funcional. |
 | Job diário disparando às 00:05 locais | O `CronTrigger` foi confirmado calculando o próximo disparo em 00:05 local (= 03:05 UTC), mas nunca foi observado efetivamente disparar. |
+
+### 2.1. Validação estática do frontend — 2026-07-27
+
+Executados com sucesso:
+
+```text
+npm run build  → TypeScript + Vite, 38 módulos transformados
+npm run lint   → ESLint sem erros
+```
+
+Também foi removida a série fictícia exibida quando não havia métricas. O estado vazio agora é
+explícito, e os cartões usam os endpoints do backend para modo de operação e eventos do dia.
 
 ## 3. Pontos que rendem discussão na apresentação
 

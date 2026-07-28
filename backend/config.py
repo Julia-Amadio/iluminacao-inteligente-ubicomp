@@ -36,8 +36,6 @@ MQTT_PASSWORD  = os.getenv("MQTT_PASSWORD", None)
 # firmware do ESP32 (docs/codigo_esp32.py), porque o timer de verdade roda lá:
 # o backend só reproduz a contagem para poder informar o modo atual em GET /estado.
 #
-# ATENÇÃO: o default está em 10s TEMPORARIAMENTE, para não esperar 5 minutos a
-# cada teste de expiração. O valor de entrega é 300 (5 min), e trocar aqui exige
-# trocar OVERRIDE_MANUAL_MS no firmware junto — se os dois divergirem, GET /estado
-# e o ESP32 passam a discordar sobre quando o override terminou.
-OVERRIDE_MANUAL_SEGUNDOS = int(os.getenv("OVERRIDE_MANUAL_SEGUNDOS", 10))
+# Valor de entrega: 5 minutos. Para testes manuais rápidos, ele pode ser reduzido
+# via .env, desde que OVERRIDE_MANUAL_MS no firmware seja alterado junto.
+OVERRIDE_MANUAL_SEGUNDOS = int(os.getenv("OVERRIDE_MANUAL_SEGUNDOS", 300))

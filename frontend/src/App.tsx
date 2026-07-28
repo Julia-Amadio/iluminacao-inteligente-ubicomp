@@ -14,13 +14,16 @@ const duration = (seconds: number) => {
 }
 
 export default function App() {
-  const { eventos, metricas, loading, error, updatedAt, refresh } = useDashboard()
+  const { eventos, eventosHoje, metricas, estado, loading, error, updatedAt, refresh } = useDashboard()
   const { connected, publish } = useMqtt()
   const [pending, setPending] = useState<LedState | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const currentState = eventos[0]?.led || 'off'
+  const currentState = estado?.led ?? eventos[0]?.led ?? 'off'
   const latestMetric = metricas[0]
-  const todayEvents = useMemo(() => eventos.filter((event) => new Date(event.timestamp).toDateString() === new Date().toDateString()), [eventos])
+  const averageSaving = useMemo(() => metricas.length
+    ? metricas.reduce((total, item) => total + item.percentual_economia, 0) / metricas.length
+    : null, [metricas])
+  const currentReadings = estado?.timestamp ? estado : eventos[0]
 
   async function sendCommand(state: LedState) {
     setPending(state); setNotice(null)
@@ -47,13 +50,15 @@ export default function App() {
         <button className="refresh" onClick={() => void refresh()} aria-label="Atualizar dados"><Icon name="refresh" /><span>{updatedAt ? `Atualizado ${updatedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : 'Atualizar'}</span></button>
       </header>
 
-      {error && <div className="alert"><span>API indisponível. Exibindo os últimos dados carregados.</span><button onClick={() => void refresh()}>Tentar novamente</button></div>}
+      {error && <div className="alert"><span>{error}</span><button onClick={() => void refresh()}>Tentar novamente</button></div>}
 
       <section className="hero-grid">
         <article className={`light-card ${currentState}`}>
           <div className="light-glow"><Icon name="bulb" /></div>
           <div className="light-info"><span>ESTADO DA LUZ</span><h2>{currentState === 'on' ? 'Acesa' : 'Apagada'}</h2><p>{currentState === 'on' ? 'Ambiente ocupado e com pouca luz.' : 'Economizando energia no momento.'}</p></div>
-          <span className="mode-pill">● Modo automático</span>
+          <span className={`mode-pill ${estado?.modo === 'manual' ? 'manual' : ''}`}>
+            ● Modo {estado?.modo === 'manual' ? 'manual' : 'automático'}
+          </span>
         </article>
 
         <article className="control-card" id="controle">
@@ -68,9 +73,9 @@ export default function App() {
       </section>
 
       <section className="metric-grid" aria-label="Resumo do sistema">
-        <article><span className="metric-icon green"><Icon name="leaf" /></span><div><span>ECONOMIA MÉDIA</span><strong>{latestMetric ? `${latestMetric.percentual_economia.toFixed(1)}%` : '—'}</strong><small>tempo com a luz apagada</small></div></article>
+        <article><span className="metric-icon green"><Icon name="leaf" /></span><div><span>ECONOMIA MÉDIA</span><strong>{averageSaving == null ? '—' : `${averageSaving.toFixed(1)}%`}</strong><small>{metricas.length ? `${metricas.length} dia${metricas.length === 1 ? '' : 's'} agregado${metricas.length === 1 ? '' : 's'}` : 'sem dias agregados'}</small></div></article>
         <article><span className="metric-icon amber"><Icon name="clock" /></span><div><span>TEMPO ECONOMIZADO</span><strong>{latestMetric ? duration(latestMetric.tempo_apagado_s) : '—'}</strong><small>no último dia agregado</small></div></article>
-        <article><span className="metric-icon blue"><Icon name="activity" /></span><div><span>EVENTOS HOJE</span><strong>{todayEvents.length}</strong><small>transições registradas</small></div></article>
+        <article><span className="metric-icon blue"><Icon name="activity" /></span><div><span>EVENTOS HOJE</span><strong>{eventosHoje.length}</strong><small>transições registradas</small></div></article>
       </section>
 
       <section className="content-grid">
@@ -81,8 +86,8 @@ export default function App() {
         </article>
         <article className="panel context-panel">
           <div className="panel-head"><div><span>CONTEXTO ATUAL</span><h2>Leituras dos sensores</h2></div></div>
-          <div className="context-value"><span className="metric-icon blue"><Icon name="distance" /></span><div><span>DISTÂNCIA</span><strong>{eventos[0]?.distancia == null ? '—' : `${eventos[0].distancia.toFixed(1)} cm`}</strong></div></div>
-          <div className="context-value"><span className="metric-icon amber"><Icon name="sun" /></span><div><span>LUMINOSIDADE</span><strong>{eventos[0]?.luminosidade ?? '—'} <small>/ 4095</small></strong></div></div>
+          <div className="context-value"><span className="metric-icon blue"><Icon name="distance" /></span><div><span>DISTÂNCIA</span><strong>{currentReadings?.distancia == null ? '—' : `${currentReadings.distancia.toFixed(1)} cm`}</strong></div></div>
+          <div className="context-value"><span className="metric-icon amber"><Icon name="sun" /></span><div><span>LUMINOSIDADE</span><strong>{currentReadings?.luminosidade ?? '—'} <small>/ 4095</small></strong></div></div>
           <p>As leituras são atualizadas quando ocorre uma transição da iluminação, conforme a arquitetura orientada a eventos.</p>
         </article>
       </section>

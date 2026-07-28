@@ -41,7 +41,7 @@ MQTT_TOPICO_CONTROLE = "pervasiva/grupo1/iluminacao/controle"  # assina comandos
 # PRECISA bater com OVERRIDE_MANUAL_SEGUNDOS em backend/config.py: o backend
 # reproduz essa mesma contagem para informar o modo atual em GET /estado, já que
 # o timer de verdade roda aqui.
-OVERRIDE_MANUAL_MS = 10 * 1000   # 5 minutos em prod, 10 segundos em dev
+OVERRIDE_MANUAL_MS = 5 * 60 * 1000   # 5 minutos
 
 # Cadência do loop principal. Os comandos MQTT são checados numa cadência bem
 # mais curta que a leitura dos sensores — se a checagem acontecesse só uma vez

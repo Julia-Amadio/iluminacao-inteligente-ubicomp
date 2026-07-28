@@ -143,26 +143,15 @@ remota funcionar de ponta a ponta, ainda faltam as alterações indicadas no bac
 - [x] Atualização automática dos dados, feedback de conexão com a API e estado da conexão MQTT
 - [x] Layout responsivo para desktop e dispositivos móveis
 - [x] Build de produção com Vite (`npm run build`)
-- [ ] Hospedagem (definir onde o frontend vai rodar)
+- [ ] Hospedagem (depende de publicar também a API e liberar sua origem no CORS;
+      publicar apenas os arquivos estáticos deixaria o painel sem dados)
 
-**Pendências encontradas em revisão do frontend** (levantadas por leitura estática, ainda não
-discutidas com o grupo — o backend já expõe o que falta para resolver as duas primeiras)
+**Pendências encontradas na revisão do frontend**
 
-- [ ] **`EnergyChart.tsx:5-6` exibe dados fabricados.** Quando `data` está vazio, o gráfico não mostra
-      estado vazio: renderiza `[42, 55, 48, 68, 61, 75, 72]` com rótulos seg–dom, visualmente idêntico
-      a dado real. O alerta de erro do `App.tsx:50` só aparece quando a API *falha* — se ela responde
-      com `metricas: []`, a curva falsa aparece sem nenhum aviso. **Prioridade alta:** numa
-      apresentação com poucos dias agregados, o gráfico mostra uma curva de eficiência convincente e
-      inventada.
-- [ ] **`App.tsx:56` tem `● Modo automático` fixo no HTML.** Nunca muda, então durante um override
-      manual a interface afirma o oposto do que está acontecendo. Já é resolvível: `GET /estado`
-      devolve `modo` (`automatico` | `manual`) e `override_expira_em`.
-- [ ] **`App.tsx:71` rotula "ECONOMIA MÉDIA" mas exibe `metricas[0].percentual_economia`** — o último
-      dia, não uma média. O array inteiro já vem em `GET /metricas`, então é cálculo local.
-- [ ] **`App.tsx:23` conta "eventos hoje" comparando `toDateString()` em fuso local**, enquanto o
-      backend grava e agrega em UTC — os dois podem discordar sobre qual dia é hoje. `GET /eventos/hoje`
-      existe no backend (em UTC) e não é consumido por ninguém.
-- [ ] Confirmar que o frontend compila (`npm run build` / `tsc`) — não foi verificado na revisão.
-- [ ] Exibir `origem` no histórico de eventos: o campo já vem em `GET /eventos` e `types.ts:8` já o
-      declara, mas nada o mostra — é o que diferencia visualmente uma transição autônoma de um comando
-      manual.
+- [x] O gráfico não fabrica dados: sem métricas, mostra um estado vazio explícito.
+- [x] O indicador de modo consome `GET /estado` e alterna entre automático e manual.
+- [x] "ECONOMIA MÉDIA" calcula a média do conjunto devolvido por `GET /metricas`; o rodapé do
+      gráfico identifica separadamente o último registro.
+- [x] "EVENTOS HOJE" consome `GET /eventos/hoje`, usando a mesma fronteira local das agregações.
+- [x] Frontend validado com `npm run build` e `npm run lint`.
+- [x] O histórico identifica cada transição como "Controle manual" ou "Automação por sensores".

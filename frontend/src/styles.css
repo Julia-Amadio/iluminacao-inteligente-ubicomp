@@ -43,6 +43,7 @@ header p:not(.eyebrow) { margin:0; color:var(--muted); font-size:14px; }
 .light-info h2 { font:700 34px 'Manrope'; margin:4px 0; }
 .light-info p { color:#b5c8c0; font-size:13px; margin:0; }
 .mode-pill { position:absolute; right:24px; top:23px; border:1px solid #ffffff24; border-radius:20px; padding:7px 10px; font-size:9px; color:#bdd2c9; }
+.mode-pill.manual { color:#ffe4a2; border-color:#efbb4266; background:#efbb4214; }
 .control-card { padding:27px 28px; }
 .card-heading, .panel-head { display:flex; justify-content:space-between; align-items:flex-start; }
 .card-heading h2, .panel-head h2 { font:700 18px 'Manrope'; margin:4px 0 0; letter-spacing:-.3px; }
@@ -65,6 +66,7 @@ header p:not(.eyebrow) { margin:0; color:var(--muted); font-size:14px; }
 .panel { padding:24px 26px; }
 .range { color:#738078!important; letter-spacing:0!important; font-size:10px!important; background:#f0f2ed; border-radius:7px; padding:7px 9px; }
 .chart-wrap { margin-top:10px; width:100%; }
+.chart-empty { min-height:190px; display:grid; place-items:center; }
 .chart-wrap svg { display:block; width:100%; overflow:visible; }
 .grid-line { stroke:#e5e8e2; stroke-width:1; stroke-dasharray:3 5; }.chart-line { fill:none; stroke:#d9a72e; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }.chart-point { fill:#fff; stroke:#d9a72e; stroke-width:3; }.chart-label { fill:#8e9992; font-size:10px; text-transform:uppercase; }
 .chart-foot { border-top:1px solid #e8eae5; padding-top:13px; display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#76837a; }

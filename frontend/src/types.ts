@@ -14,3 +14,13 @@ export interface Metrica {
   tempo_apagado_s: number
   percentual_economia: number
 }
+
+export interface Estado {
+  led: LedState | null
+  origem: 'sensor' | 'manual' | null
+  modo: 'automatico' | 'manual'
+  override_expira_em: string | null
+  distancia: number | null
+  luminosidade: number | null
+  timestamp: string | null
+}

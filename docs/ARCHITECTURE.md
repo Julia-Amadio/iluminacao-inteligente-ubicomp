@@ -28,7 +28,7 @@ funcional de forma independente:
 | 1 - Detecção e controle local | ESP32 + HC-SR04 + LDR, fusão de contexto, aciona o LED localmente | ✅ implementado |
 | 2 - Conectividade e publicação MQTT | ESP32 publica eventos de transição de estado (JSON) num broker público (HiveMQ) | ✅ implementado |
 | 3 - Gateway computacional e persistência | Backend Python assina o tópico MQTT, persiste eventos e calcula eficiência energética | ✅ implementado (**este repositório**) |
-| 4 - Interface e atuação remota bidirecional | Frontend React consome a API e publica comandos de controle manual num tópico MQTT; ESP32 assina esse tópico e aceita override temporário | ✅ backend e firmware validados no hardware (ver [`VALIDACAO.md`](./VALIDACAO.md)); frontend com pendências |
+| 4 - Interface e atuação remota bidirecional | Frontend React consome a API e publica comandos de controle manual num tópico MQTT; ESP32 assina esse tópico e aceita override temporário | ✅ implementado; backend e firmware validados no hardware e frontend validado por build/lint (ver [`VALIDACAO.md`](./VALIDACAO.md)) |
 
 ### 1.2. Diagrama de blocos
 
@@ -369,7 +369,7 @@ Documentação interativa (Swagger) em `http://localhost:8000/docs` com o servid
 | `MQTT_TOPICO` | não | `pervasiva/grupo1/iluminacao` | Tópico assinado pelo subscriber. |
 | `MQTT_TOPICO_CONTROLE` | não | `pervasiva/grupo1/iluminacao/controle` | Tópico onde `POST /comando` publica. O ESP32 assina este tópico, e o frontend publica nele direto por WebSocket. |
 | `MQTT_USER` / `MQTT_PASSWORD` | não | `None` | Só configuradas se o broker exigir autenticação — quando presentes, o client também habilita TLS (`tls_set()`). |
-| `OVERRIDE_MANUAL_SEGUNDOS` | não | `10` (temporário; valor de entrega `300`) | Duração do override manual. Precisa ser igual ao valor no firmware do ESP32 — ver "Por que `GET /estado` existe" na seção 2.6. |
+| `OVERRIDE_MANUAL_SEGUNDOS` | não | `300` | Duração do override manual (5 minutos). Precisa ser igual ao valor no firmware do ESP32 — ver "Por que `GET /estado` existe" na seção 2.6. |
 | `TZ_LOCAL` | não | `America/Sao_Paulo` | Fuso usado para as fronteiras de dia nas agregações e em `GET /eventos/hoje`. Não afeta os timestamps gravados, que seguem em UTC — ver "Política de fuso horário" na seção 2.5. |
 
 No MongoDB Atlas é preciso liberar o IP de acesso; em desenvolvimento, `0.0.0.0/0` evita travar
